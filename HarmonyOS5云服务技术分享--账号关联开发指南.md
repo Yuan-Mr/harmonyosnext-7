@@ -1,80 +1,98 @@
-👋 大家好！今天我们来聊聊如何在HarmonyOS应用开发中，使用ArkTS（API 12）实现账号关联功能。无论是社交应用、游戏还是工具类App，账号体系都是用户体验的重要一环。通过灵活的账号关联功能，用户可以用手机、邮箱、华为账号等多种方式登录，还能自由绑定或解绑账号，让用户管理更便捷！
+👋 Hello everyone! Today, let's explore how to implement account linking with ArkTS (API 12) in HarmonyOS app development. For social apps, games, or utility tools, the account system is a key part of user experience. With flexible account linking, users can log in via mobile phone, email, Huawei Account, etc., and freely bind/unbind accounts for easier management!  
 
-🌟 为什么要做账号关联？
-想象一下，用户先用手机号注册了你的App，后来想换成邮箱登录，但又不想丢失原有数据——这时候账号关联就派上用场了！通过关联多个身份验证方式，用户可以用任意一种方式登录，而系统会识别为同一个账号，数据无缝同步。同时，开发者也能通过统一的用户ID管理用户行为，提升运营效率。
 
-📋 前提条件
-​​开通服务​​：在AGC控制台开启「认证服务」。
-​​集成SDK​​：在项目中集成@hw-agconnect/auth包。
-​​配置应用​​：确保已添加支持的认证方式（如手机、邮箱、华为账号等）。
-🔗 关联账号的3种姿势（附代码）
-1️⃣ 关联手机号
-用户已登录其他方式（如邮箱），想绑定手机号：
+### 🌟 Why Implement Account Linking?  
+Imagine a user registers with a mobile number but later wants to switch to email login without losing data—account linking solves this! By linking multiple authentication methods, users can log in via any method, and the system recognizes them as the same account with seamless data synchronization. Developers can also manage user behavior via a unified UID, boosting operational efficiency.  
 
-import auth from '@hw-agconnect/auth';
-import { hilog } from '@kit.PerformanceAnalysisKit';
 
-auth.getCurrentUser().then((user: AuthUser | null) => {
-  user!.link({
-    kind: "phone",
-    phoneNumber: "180****1485",
-    countryCode: "86",
-    verifyCode: "123456" // 实际开发中从短信获取
-  }).then(() => {
-    hilog.info(0x0000, 'AuthDemo', '手机号关联成功！');
-  }).catch((error: Error) => {
-    hilog.error(0x0000, 'AuthDemo', `关联失败：${error.message}`);
-  });
-});
-​​注意​​：需先调用短信验证接口获取验证码。
+### 📋 Prerequisites  
+- **Service Activation**: Enable *Authentication Service* in the AGC console.  
+- **SDK Integration**: Add the `@hw-agconnect/auth` package to your project.  
+- **App Configuration**: Ensure supported authentication methods (e.g., mobile, email, Huawei Account) are configured.  
 
-2️⃣ 关联邮箱
-用户想绑定邮箱作为备用登录方式：
 
-user!.link({
-  kind: "email",
-  email: "user@example.com",
-  password: "SecurePassword123!", // 可选（如已设置密码）
-  verifyCode: "7890" // 从邮箱验证码获取
-}).then(() => {
-  hilog.info(0x0000, 'AuthDemo', '邮箱关联成功！');
-});
-3️⃣ 关联华为账号
-一键绑定华为账号，适合生态内应用：
+### 🔗 Three Ways to Link Accounts (with Code)  
+#### 1️⃣ Link a Mobile Number  
+When a user logged in via another method (e.g., email) wants to bind a mobile number:  
+```typescript  
+import auth from '@hw-agconnect/auth';  
+import { hilog } from '@kit.PerformanceAnalysisKit';  
 
-user!.link({ kind: "hwid" })
-  .then(() => hilog.info(0x0000, 'AuthDemo', '华为账号关联成功！'));
-⚠️ 避坑指南
-​​唯一性限制​​：每个认证方式只能绑定一个账号（如不能绑定两个不同的手机号）。
-​​敏感操作保护​​：修改密码、解绑账号等操作需在登录后5分钟内完成，超时需重新认证。
-​​至少保留一个账号​​：最后一个认证方式不可解绑，避免账号丢失。
-🔓 如何解绑账号？
-当用户想取消某个登录方式时（需确保至少保留一种方式）：
+auth.getCurrentUser().then((user: AuthUser | null) => {  
+  user!.link({  
+    kind: "phone",  
+    phoneNumber: "180****1485",  
+    countryCode: "86",  
+    verifyCode: "123456" // Obtain from SMS in real development  
+  }).then(() => {  
+    hilog.info(0x0000, 'AuthDemo', 'Mobile number linked successfully!');  
+  }).catch((error: Error) => {  
+    hilog.error(0x0000, 'AuthDemo', `Linking failed: ${error.message}`);  
+  });  
+});  
+```  
+**Note**: Call the SMS verification API to get the code first.  
 
-// 解绑手机号
-auth.getCurrentUser().then(user => {
-  user.unlink("phone")
-    .then(() => hilog.info(0x0000, 'AuthDemo', '手机号已解绑！'));
-});
-💡 扩展技巧
-​​统一用户画像​​：通过user.getUid()获取唯一ID，无论用户用哪种方式登录。
+#### 2️⃣ Link an Email  
+When a user wants to bind an email as an alternative login:  
+```typescript  
+user!.link({  
+  kind: "email",  
+  email: "user@example.com",  
+  password: "SecurePassword123!", // Optional (if password is set)  
+  verifyCode: "7890" // Obtain from the email verification code  
+}).then(() => {  
+  hilog.info(0x0000, 'AuthDemo', 'Email linked successfully!');  
+});  
+```  
 
-​​异常处理​​：用try-catch包裹敏感操作，提示友好错误信息：
+#### 3️⃣ Link a Huawei Account  
+One-click binding for Huawei Accounts, ideal for ecosystem apps:  
+```typescript  
+user!.link({ kind: "hwid" })  
+  .then(() => hilog.info(0x0000, 'AuthDemo', 'Huawei Account linked successfully!'));  
+```  
 
-catch((error: Error) => {
-  if (error.code === '2032') {
-    alert('验证码错误，请重新获取！');
-  }
-});
-​​多端同步​​：关联/解绑操作会实时同步到所有登录设备。
 
-🎯 最佳实践场景
-​​用户升级体验​​：匿名用户转正时，绑定手机/邮箱保留数据。
-​​合并重复账号​​：当系统检测到同一用户用不同方式注册时，提示关联。
-​​安全加固​​：引导用户绑定第二种验证方式作为备用登录。
-🚀 结语
-通过ArkTS的账号关联功能，开发者可以轻松构建灵活安全的用户体系。无论是提升用户体验，还是优化后台管理，这都是HarmonyOS应用开发中不可或缺的一环。赶紧动手试试吧！如果遇到问题，欢迎在评论区留言讨论～
+### ⚠️ Pitfall Prevention  
+- **Uniqueness Rule**: Each authentication method can only bind to one account (e.g., cannot bind two mobile numbers).  
+- **Sensitive Ops Protection**: Actions like password changes or unbinding must be done within 5 minutes of login; reauthenticate if timed out.  
+- **Retain One Method**: The last authentication method can't be unbound to prevent account loss.  
 
-​​✨ 小互动​​：你在开发中遇到过哪些账号体系的“神坑”？欢迎分享你的故事！
 
-希望这篇指南能成为你HarmonyOS开发路上的实用手册，敬请期待！ 👨💻🚀
+### 🔓 How to Unbind an Account  
+When a user wants to unbind a method (ensure at least one remains):  
+```typescript  
+// Unbind mobile number  
+auth.getCurrentUser().then(user => {  
+  user.unlink("phone")  
+    .then(() => hilog.info(0x0000, 'AuthDemo', 'Mobile number unbound!'));  
+});  
+```  
+
+
+### 💡 Advanced Tips  
+- **Unified User ID**: Use `user.getUid()` to get a unique ID for consistent user identification.  
+- **Error Handling**: Wrap sensitive ops in try-catch with friendly messages:  
+  ```typescript  
+  catch((error: Error) => {  
+    if (error.code === '2032') {  
+      alert('Invalid verification code, request again!');  
+    }  
+  });  
+  ```  
+- **Multi-Device Sync**: Linking/unbinding syncs real-time across all logged-in devices.  
+
+
+### 🎯 Best Practices  
+- **User Upgrade**: When anonymous users convert to formal accounts, bind mobile/email to retain data.  
+- **Duplicate Account Merge**: Prompt linking when the system detects the same user registered via different methods.  
+- **Security Enhancement**: Guide users to bind a second verification method as a backup.  
+
+
+### 🚀 Conclusion  
+ArkTS account linking lets developers build flexible, secure user systems with ease. Whether enhancing UX or optimizing backend management, it's essential for HarmonyOS development. Give it a try! Share your issues or stories in the comments.  
+
+✨ **互动时间**: What tricky account system issues have you faced in development? Share your experiences!  
+
+Hope this guide serves as a practical handbook for your HarmonyOS journey. Stay tuned! 👨💻🚀
